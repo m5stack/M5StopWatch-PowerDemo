@@ -1,0 +1,17 @@
+idf_component_register(
+    SRCS
+        "m5sw_pm1.cpp"
+        "m5sw_ioe1.cpp"
+        "m5sw_power.cpp"
+    INCLUDE_DIRS
+        "include"
+    REQUIRES
+        M5PM1
+        M5IOE1
+        m5sw_board
+        esp_driver_gpio
+        esp_hw_support
+        esp_system
+        freertos
+        log
+)

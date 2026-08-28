@@ -1,0 +1,29 @@
+menu "M5StopWatch Wi-Fi"
+
+    config M5SW_WIFI_SSID
+        string "Controlled test AP SSID"
+        default ""
+        help
+            Keep the default empty in committed sdkconfig.defaults files. Set
+            the real value only in a local sdkconfig or through menuconfig.
+
+    config M5SW_WIFI_PASSWORD
+        string "Controlled test AP password"
+        default ""
+        help
+            Keep credentials out of version control. An empty value selects
+            an open network when an SSID is configured.
+
+    config M5SW_WIFI_TARGET_IPV4
+        string "Periodic ICMP target IPv4 address"
+        default ""
+        help
+            Use a fixed host on the controlled LAN. Host names are not resolved
+            so the measured traffic does not include DNS activity.
+
+    config M5SW_WIFI_LISTEN_INTERVAL
+        int "MAX_MODEM listen interval in beacon periods"
+        range 1 10
+        default 3
+
+endmenu

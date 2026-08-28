@@ -1,0 +1,11 @@
+menu "M5StopWatch Full Load safety"
+
+    config M5SW_FULL_LOAD_SAFETY_ACK
+        bool "External Full Load safety limits are approved"
+        default n
+        help
+            Enable only after the power path, fixture, current limit, external
+            temperature threshold, and manual stop procedure are recorded and
+            approved. The firmware refuses to energize Full Load when disabled.
+
+endmenu

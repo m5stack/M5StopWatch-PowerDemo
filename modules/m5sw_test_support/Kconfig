@@ -1,0 +1,11 @@
+menu "M5StopWatch test support"
+
+    config M5SW_TEST_ID
+        string "Stable test identifier"
+        default "unset"
+
+    config M5SW_CONFIG_ID
+        string "Stable test configuration identifier"
+        default "unset"
+
+endmenu

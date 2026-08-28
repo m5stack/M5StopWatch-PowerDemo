@@ -1,0 +1,4 @@
+dependencies:
+  espressif/i2c_bus:
+    version: "1.5.2"
+    public: true

@@ -1,82 +1,106 @@
-# Source:
-# https://github.com/Tinyu-Zhao/M5-Depends/blob/main/.github/ISSUE_TEMPLATE/bug-report.yml
-# See:
-# https://docs.github.com/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
-
 name: Bug report
-description: Report a problem with the code in this repository.
+description: Report a reproducible firmware, hardware-interaction, or power-test issue.
+title: "[Bug]: "
 labels:
   - "type: bug"
 body:
   - type: markdown
     attributes:
-      value: "Thank you for opening an issue on an M5Stack Arduino library repository.\n\
-      To improve the speed of resolution please review the following guidelines and common troubleshooting steps below before creating the issue:\n\
-      If you have any UIFLOW questions you can ask in the [special board](https://community.m5stack.com/category/5/uiflow), there will be many enthusiastic friends to help you.\n\
-      Do not use GitHub issues for troubleshooting projects and issues. Instead use the forums at https://community.m5stack.com to ask questions and troubleshoot why something isn't working as expected.  In many cases the problem is a common issue that you will more quickly receive help from the forum community.  GitHub issues are meant for known defects in the code.  If you don't know if there is a defect in the code then start with troubleshooting on the forum first."
-  - type: textarea
-    id: description
+      value: |
+        Thanks for reporting an issue with M5StopWatch Power Demo.
+        Do not include Wi-Fi passwords or other credentials in this report.
+
+  - type: input
+    id: test-project
     attributes:
-      label: Describe the bug
-      description: A clear and concise description of what the bug is.
+      label: Test firmware
+      description: Enter the test project directory that reproduces the issue.
+      placeholder: tests/l0_shutdown
     validations:
       required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem description
+      description: Describe what happened and how it affects the test result.
+    validations:
+      required: true
+
   - type: textarea
     id: reproduce
     attributes:
-      label: To reproduce
-      description: Provide the specific set of steps we can follow to reproduce the problem.
+      label: Reproduction steps
+      description: List the exact build configuration and steps needed to reproduce the issue.
       placeholder: |
-        1. In this environment...
-        2. With this config...
-        3. Run '...'
-        4. See error...
+        1. Initialize submodules.
+        2. Build tests/...
+        3. Flash the production M5StopWatch hardware.
+        4. Observe ...
     validations:
       required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Provide the versions needed to reproduce the result.
+      value: |
+        - ESP-IDF version: 5.5.5
+        - Host OS:
+        - Hardware revision:
+        - Repository commit:
+    validations:
+      required: true
+
+  - type: textarea
+    id: firmware-configuration
+    attributes:
+      label: Firmware configuration
+      description: Provide the reported identifiers and relevant local configuration without credentials.
+      value: |
+        - test_id:
+        - config_id:
+        - PROFILE:
+        - Relevant sdkconfig overrides:
+    validations:
+      required: true
+
   - type: textarea
     id: expected
     attributes:
       label: Expected behavior
-      description: What would you expect to happen after following those instructions?
+      description: Describe the expected firmware state, wake result, or power behavior.
     validations:
       required: true
+
   - type: textarea
-    id: screenshots
+    id: logs
     attributes:
-      label: Screenshots
-      description: If applicable, add screenshots to help explain your problem.
+      label: Functional validation logs
+      description: Add the relevant Stage A serial output, if available. Remove credentials and unrelated data.
+      render: shell
     validations:
       required: false
+
   - type: textarea
-    id: information
+    id: power-evidence
     attributes:
-      label: Environment
-      description: |
-       If applicable, add screenshots to help explain your problem.
-        examples:
-          - **OS**: Ubuntu 20.04
-          - **IDE & IDE Version**: Arduino 1.8.19 Or Platform IO v2.5.0
-          - **Repository Version**: 0.4.0
-      value: |
-        - OS:
-        - IDE &IDE Version:
-        - Repository Version:
+      label: Power measurement evidence
+      description: For power issues, attach the capture and state the voltage, current value, and measurement conditions.
+      placeholder: |
+        - Supply voltage:
+        - WINDOW Avg:
+        - Measurement conditions:
     validations:
       required: false
-  - type: textarea
-    id: additional
-    attributes:
-      label: Additional context
-      description: Add any additional information here.
-    validations:
-      required: false
+
   - type: checkboxes
     id: checklist
     attributes:
-      label: Issue checklist
-      description: Please double-check that you have done each of the following things before submitting the issue.
+      label: Checklist
       options:
-        - label: I searched for previous reports in [the issue tracker](https://github.com/m5stack/M5Stack/issues?q=)
+        - label: I searched for existing reports of this issue.
           required: true
-        - label: My report contains all necessary details
+        - label: I removed Wi-Fi passwords and other credentials from this report.
           required: true

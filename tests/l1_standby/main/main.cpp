@@ -8,15 +8,13 @@
 #include "m5sw_test_support.hpp"
 
 namespace {
-constexpr char kTag[] = "l1_standby";
+constexpr char kTag[]              = "l1_standby";
 constexpr TickType_t kPrepareDelay = pdMS_TO_TICKS(3000);
 
 [[noreturn]] void fail(const char* stage, esp_err_t error, int raw_error)
 {
-    ESP_LOGE(kTag, "BOARD_FAIL stage=%s error=%s raw=%d", stage,
-             esp_err_to_name(error), raw_error);
-    m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail,
-                                     "L1 preparation failed");
+    ESP_LOGE(kTag, "BOARD_FAIL stage=%s error=%s raw=%d", stage, esp_err_to_name(error), raw_error);
+    m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail, "L1 preparation failed");
     m5sw::test_support::hold_safe_idle();
 }
 }  // namespace
@@ -30,7 +28,7 @@ extern "C" void app_main(void)
     const esp_err_t i2c_result = m5sw::board::initialize_i2c();
     if (i2c_result != ESP_OK) fail("i2c", i2c_result, i2c_result);
 
-    i2c_bus_handle_t bus = nullptr;
+    i2c_bus_handle_t bus         = nullptr;
     const esp_err_t claim_result = m5sw::board::acquire_i2c(&bus);
     if (claim_result != ESP_OK) fail("shared_bus", claim_result, claim_result);
 

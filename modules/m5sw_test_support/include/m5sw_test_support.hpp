@@ -14,10 +14,10 @@ enum class FinalStatus : std::uint8_t {
 };
 
 struct TestContext {
-    const char* test_id = nullptr;
-    const char* firmware_version = nullptr;
-    std::uint32_t config_hash = 0;
-    esp_reset_reason_t reset_reason = ESP_RST_UNKNOWN;
+    const char* test_id                 = nullptr;
+    const char* firmware_version        = nullptr;
+    std::uint32_t config_hash           = 0;
+    esp_reset_reason_t reset_reason     = ESP_RST_UNKNOWN;
     esp_sleep_wakeup_cause_t wake_cause = ESP_SLEEP_WAKEUP_UNDEFINED;
 };
 

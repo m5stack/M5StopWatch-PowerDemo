@@ -11,30 +11,34 @@ namespace m5sw::power {
 
 struct DriverResult {
     esp_err_t error = ESP_OK;
-    int raw_error = M5PM1_OK;
+    int raw_error   = M5PM1_OK;
 
-    [[nodiscard]] bool ok() const { return error == ESP_OK; }
+    [[nodiscard]] bool ok() const
+    {
+        return error == ESP_OK;
+    }
 };
 
 enum class Pm1Gpio : std::uint8_t {
     rtc_imu = M5PM1_GPIO_NUM_0,
-    port = M5PM1_GPIO_NUM_4,
+    port    = M5PM1_GPIO_NUM_4,
 };
 
 class Pm1Adapter final {
 public:
-    Pm1Adapter() = default;
-    Pm1Adapter(const Pm1Adapter&) = delete;
+    Pm1Adapter()                             = default;
+    Pm1Adapter(const Pm1Adapter&)            = delete;
     Pm1Adapter& operator=(const Pm1Adapter&) = delete;
 
     // Borrows the shared bus; the adapter owns only its PM1 device state.
-    [[nodiscard]] DriverResult begin(i2c_bus_handle_t bus,
-                                     std::uint32_t speed_hz = 100000);
-    [[nodiscard]] bool initialized() const { return initialized_; }
+    [[nodiscard]] DriverResult begin(i2c_bus_handle_t bus, std::uint32_t speed_hz = 100000);
+    [[nodiscard]] bool initialized() const
+    {
+        return initialized_;
+    }
 
     // Updates only bits selected by mask and verifies the written value by readback.
-    [[nodiscard]] DriverResult set_power_config(std::uint8_t mask,
-                                                std::uint8_t value);
+    [[nodiscard]] DriverResult set_power_config(std::uint8_t mask, std::uint8_t value);
     // Selects external 5V input/output mode and verifies the BOOST bit.
     [[nodiscard]] DriverResult set_external_5v_output(bool enabled);
     // Sets the PM1-controlled status LED level and verifies the LED bit.
@@ -89,8 +93,7 @@ public:
 
 private:
     [[nodiscard]] DriverResult result(m5pm1_err_t raw) const;
-    [[nodiscard]] DriverResult verify_mask(std::uint8_t mask,
-                                           std::uint8_t expected);
+    [[nodiscard]] DriverResult verify_mask(std::uint8_t mask, std::uint8_t expected);
 
     M5PM1 pm1_;
     bool initialized_ = false;

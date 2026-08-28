@@ -8,13 +8,13 @@
 namespace m5sw::board {
 namespace {
 
-constexpr i2c_port_t kI2cPort = I2C_NUM_0;
+constexpr i2c_port_t kI2cPort       = I2C_NUM_0;
 constexpr std::size_t kScanCapacity = 32;
 
 i2c_bus_handle_t g_i2c_bus = nullptr;
-I2cSpeed g_i2c_speed = I2cSpeed::standard;
+I2cSpeed g_i2c_speed       = I2cSpeed::standard;
 std::uint32_t g_i2c_claims = 0;
-portMUX_TYPE g_state_lock = portMUX_INITIALIZER_UNLOCKED;
+portMUX_TYPE g_state_lock  = portMUX_INITIALIZER_UNLOCKED;
 
 static_assert(M5IOE1_PIN_1 == 0);
 static_assert(M5IOE1_PIN_2 == 1);
@@ -41,19 +41,18 @@ static_assert(static_cast<std::uint8_t>(IoePin::speaker_enable) == M5IOE1_PIN_10
 
 i2c_bus_handle_t create_bus(I2cSpeed speed)
 {
-    i2c_config_t config = {};
-    config.mode = I2C_MODE_MASTER;
-    config.sda_io_num = kI2cSda;
-    config.scl_io_num = kI2cScl;
-    config.sda_pullup_en = true;
-    config.scl_pullup_en = true;
+    i2c_config_t config     = {};
+    config.mode             = I2C_MODE_MASTER;
+    config.sda_io_num       = kI2cSda;
+    config.scl_io_num       = kI2cScl;
+    config.sda_pullup_en    = true;
+    config.scl_pullup_en    = true;
     config.master.clk_speed = static_cast<std::uint32_t>(speed);
-    config.clk_flags = 0;
+    config.clk_flags        = 0;
     return i2c_bus_create(kI2cPort, &config);
 }
 
-bool contains_address(const std::array<std::uint8_t, kScanCapacity>& addresses,
-                      std::uint8_t count, std::uint8_t target)
+bool contains_address(const std::array<std::uint8_t, kScanCapacity>& addresses, std::uint8_t count, std::uint8_t target)
 {
     const std::size_t saved = count < addresses.size() ? count : addresses.size();
     for (std::size_t index = 0; index < saved; ++index) {
@@ -123,7 +122,7 @@ esp_err_t initialize_i2c(I2cSpeed speed)
         i2c_bus_delete(&bus);
         return ESP_ERR_INVALID_STATE;
     }
-    g_i2c_bus = bus;
+    g_i2c_bus   = bus;
     g_i2c_speed = speed;
     portEXIT_CRITICAL(&g_state_lock);
     return ESP_OK;
@@ -137,7 +136,7 @@ esp_err_t deinitialize_i2c()
         return ESP_ERR_INVALID_STATE;
     }
     i2c_bus_handle_t bus = g_i2c_bus;
-    g_i2c_bus = nullptr;
+    g_i2c_bus            = nullptr;
     portEXIT_CRITICAL(&g_state_lock);
 
     if (bus == nullptr) {
@@ -191,7 +190,7 @@ esp_err_t reconfigure_i2c(I2cSpeed speed)
     }
     const I2cSpeed previous_speed = g_i2c_speed;
     i2c_bus_handle_t previous_bus = g_i2c_bus;
-    g_i2c_bus = nullptr;
+    g_i2c_bus                     = nullptr;
     portEXIT_CRITICAL(&g_state_lock);
 
     if (previous_bus != nullptr) {
@@ -208,14 +207,14 @@ esp_err_t reconfigure_i2c(I2cSpeed speed)
     if (replacement == nullptr) {
         replacement = create_bus(previous_speed);
         portENTER_CRITICAL(&g_state_lock);
-        g_i2c_bus = replacement;
+        g_i2c_bus   = replacement;
         g_i2c_speed = previous_speed;
         portEXIT_CRITICAL(&g_state_lock);
         return ESP_FAIL;
     }
 
     portENTER_CRITICAL(&g_state_lock);
-    g_i2c_bus = replacement;
+    g_i2c_bus   = replacement;
     g_i2c_speed = speed;
     portEXIT_CRITICAL(&g_state_lock);
     return ESP_OK;
@@ -239,23 +238,22 @@ esp_err_t probe_devices(ProbeReport* report, DeviceMask required_devices)
     *report = {};
 
     i2c_bus_handle_t bus = nullptr;
-    esp_err_t result = acquire_i2c(&bus);
+    esp_err_t result     = acquire_i2c(&bus);
     if (result != ESP_OK) {
         return result;
     }
 
     std::array<std::uint8_t, kScanCapacity> addresses = {};
-    const std::uint8_t found =
-        i2c_bus_scan(bus, addresses.data(), static_cast<std::uint8_t>(addresses.size()));
+    const std::uint8_t found       = i2c_bus_scan(bus, addresses.data(), static_cast<std::uint8_t>(addresses.size()));
     const esp_err_t release_result = release_i2c();
     if (release_result != ESP_OK) {
         return release_result;
     }
 
-    report->pm1 = contains_address(addresses, found, kPm1Address);
+    report->pm1  = contains_address(addresses, found, kPm1Address);
     report->ioe1 = contains_address(addresses, found, kIoe1Address);
-    report->rtc = contains_address(addresses, found, kRtcAddress);
-    report->imu = contains_address(addresses, found, kImuAddress);
+    report->rtc  = contains_address(addresses, found, kRtcAddress);
+    report->imu  = contains_address(addresses, found, kImuAddress);
 
     return report->contains(required_devices) ? ESP_OK : ESP_ERR_NOT_FOUND;
 }

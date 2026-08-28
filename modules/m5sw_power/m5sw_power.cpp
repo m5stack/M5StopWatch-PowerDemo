@@ -9,8 +9,8 @@
 namespace m5sw::power {
 namespace {
 
-constexpr TickType_t kL2IdleSleepDelay = pdMS_TO_TICKS(1000);
-constexpr TickType_t kTouchResetLowDelay = pdMS_TO_TICKS(10);
+constexpr TickType_t kL2IdleSleepDelay     = pdMS_TO_TICKS(1000);
+constexpr TickType_t kTouchResetLowDelay   = pdMS_TO_TICKS(10);
 constexpr TickType_t kTouchResetReadyDelay = pdMS_TO_TICKS(50);
 
 AdapterProbeResult probe_pm1(i2c_bus_handle_t bus)
@@ -20,14 +20,13 @@ AdapterProbeResult probe_pm1(i2c_bus_handle_t bus)
     if (!result.ok()) return {result.error, "pm1_begin", result.raw_error};
 
     std::uint8_t power_config = 0;
-    result = pm1.read_power_config(&power_config);
+    result                    = pm1.read_power_config(&power_config);
     if (!result.ok()) return {result.error, "pm1_power_read", result.raw_error};
-    result = pm1.set_power_config(M5PM1_PWR_CFG_CHG_EN,
-                                   power_config & M5PM1_PWR_CFG_CHG_EN);
+    result = pm1.set_power_config(M5PM1_PWR_CFG_CHG_EN, power_config & M5PM1_PWR_CFG_CHG_EN);
     if (!result.ok()) return {result.error, "pm1_power_verify", result.raw_error};
 
     bool ldo_hold = false;
-    result = pm1.read_ldo_hold(&ldo_hold);
+    result        = pm1.read_ldo_hold(&ldo_hold);
     if (!result.ok()) return {result.error, "pm1_ldo_read", result.raw_error};
     result = pm1.set_ldo_hold(ldo_hold);
     if (!result.ok()) return {result.error, "pm1_ldo_verify", result.raw_error};
@@ -42,7 +41,7 @@ AdapterProbeResult probe_pm1(i2c_bus_handle_t bus)
     if (!result.ok()) return {result.error, "pm1_gpio4_restore", result.raw_error};
 
     std::uint8_t wake_source = 0;
-    result = pm1.read_wake_source(&wake_source);
+    result                   = pm1.read_wake_source(&wake_source);
     if (!result.ok()) return {result.error, "pm1_wake_read", result.raw_error};
     if (wake_source != 0) {
         result = pm1.clear_wake_source(wake_source);
@@ -50,7 +49,7 @@ AdapterProbeResult probe_pm1(i2c_bus_handle_t bus)
     }
 
     std::uint8_t gpio_irq = 0;
-    result = pm1.read_gpio_irq(&gpio_irq);
+    result                = pm1.read_gpio_irq(&gpio_irq);
     if (!result.ok()) return {result.error, "pm1_irq_read", result.raw_error};
     if (gpio_irq != 0) {
         result = pm1.clear_gpio_irq(gpio_irq);
@@ -74,21 +73,18 @@ AdapterProbeResult probe_ioe1(i2c_bus_handle_t bus)
         m5sw::board::IoePin pin;
         bool safe_level;
     } kSafePins[] = {
-        {m5sw::board::IoePin::mux_select, false},
-        {m5sw::board::IoePin::audio_enable, false},
-        {m5sw::board::IoePin::touch_reset, false},
-        {m5sw::board::IoePin::display_reset, false},
-        {m5sw::board::IoePin::l3b_enable, false},
-        {m5sw::board::IoePin::speaker_enable, false},
+        {m5sw::board::IoePin::mux_select, false},  {m5sw::board::IoePin::audio_enable, false},
+        {m5sw::board::IoePin::touch_reset, false}, {m5sw::board::IoePin::display_reset, false},
+        {m5sw::board::IoePin::l3b_enable, false},  {m5sw::board::IoePin::speaker_enable, false},
     };
     for (const auto& safe_pin : kSafePins) {
         result = ioe1.set_pin(safe_pin.pin, safe_pin.safe_level);
         if (!result.ok()) return {result.error, "ioe1_pin", result.raw_error};
         bool actual = true;
-        result = ioe1.read_pin(safe_pin.pin, &actual);
+        result      = ioe1.read_pin(safe_pin.pin, &actual);
         if (!result.ok() || actual != safe_pin.safe_level) {
-            return {result.ok() ? ESP_ERR_INVALID_RESPONSE : result.error,
-                    "ioe1_pin_readback", result.ok() ? M5IOE1_FAIL : result.raw_error};
+            return {result.ok() ? ESP_ERR_INVALID_RESPONSE : result.error, "ioe1_pin_readback",
+                    result.ok() ? M5IOE1_FAIL : result.raw_error};
         }
     }
 
@@ -130,13 +126,13 @@ PowerResult PowerController::from_ioe1(Ioe1Result result) const
 PowerResult PowerController::begin(i2c_bus_handle_t bus, std::uint32_t speed_hz)
 {
     if (bus == nullptr) return {ESP_ERR_INVALID_ARG, M5PM1_ERR_INVALID_ARG};
-    bus_ = bus;
+    bus_                     = bus;
     const PowerResult result = from_pm1(pm1_.begin(bus, speed_hz));
-    initialized_ = result.ok();
-    l1_prepared_ = false;
-    l1_prepared_wake_ = WakeSelection::none;
-    l2_prepared_ = false;
-    l2_prepared_wake_ = WakeSelection::none;
+    initialized_             = result.ok();
+    l1_prepared_             = false;
+    l1_prepared_wake_        = WakeSelection::none;
+    l2_prepared_             = false;
+    l2_prepared_wake_        = WakeSelection::none;
     return result;
 }
 
@@ -144,7 +140,7 @@ PowerResult PowerController::begin_ioe1()
 {
     if (!initialized_) return {ESP_ERR_INVALID_STATE, M5PM1_ERR_NOT_INIT};
     if (ioe1_initialized_ && ioe1_.initialized()) return {};
-    ioe1_initialized_ = false;
+    ioe1_initialized_  = false;
     PowerResult result = from_ioe1(ioe1_.begin(bus_, 100000));
     if (!result.ok()) return result;
     result = from_ioe1(ioe1_.configure_i2c(false, 100000));
@@ -156,14 +152,13 @@ PowerResult PowerController::begin_ioe1()
 PowerResult PowerController::prepare_l0()
 {
     if (!initialized_) return {ESP_ERR_INVALID_STATE, M5PM1_ERR_NOT_INIT};
-    l1_prepared_ = false;
-    l2_prepared_ = false;
+    l1_prepared_       = false;
+    l2_prepared_       = false;
     PowerResult result = from_pm1(pm1_.disable_gpio_wake(Pm1Gpio::rtc_imu));
     if (!result.ok()) return result;
     result = from_pm1(pm1_.disable_gpio_wake(Pm1Gpio::port));
     if (!result.ok()) return result;
-    result = from_pm1(pm1_.set_power_config(
-        M5PM1_PWR_CFG_CHG_EN | M5PM1_PWR_CFG_BOOST_EN, 0));
+    result = from_pm1(pm1_.set_power_config(M5PM1_PWR_CFG_CHG_EN | M5PM1_PWR_CFG_BOOST_EN, 0));
     if (!result.ok()) return result;
     return from_pm1(pm1_.set_ldo_hold(false));
 }
@@ -171,8 +166,8 @@ PowerResult PowerController::prepare_l0()
 PowerResult PowerController::prepare_l1(WakeSelection wake)
 {
     if (!initialized_) return {ESP_ERR_INVALID_STATE, M5PM1_ERR_NOT_INIT};
-    l1_prepared_ = false;
-    l2_prepared_ = false;
+    l1_prepared_       = false;
+    l2_prepared_       = false;
     PowerResult result = from_pm1(pm1_.disable_gpio_wake(Pm1Gpio::rtc_imu));
     if (!result.ok()) return result;
     result = from_pm1(pm1_.disable_gpio_wake(Pm1Gpio::port));
@@ -183,12 +178,11 @@ PowerResult PowerController::prepare_l1(WakeSelection wake)
         result = from_pm1(pm1_.configure_gpio_wake(Pm1Gpio::port));
     }
     if (!result.ok()) return result;
-    result = from_pm1(pm1_.set_power_config(
-        M5PM1_PWR_CFG_CHG_EN | M5PM1_PWR_CFG_BOOST_EN, 0));
+    result = from_pm1(pm1_.set_power_config(M5PM1_PWR_CFG_CHG_EN | M5PM1_PWR_CFG_BOOST_EN, 0));
     if (!result.ok()) return result;
     result = from_pm1(pm1_.set_ldo_hold(true));
     if (!result.ok()) return result;
-    l1_prepared_ = true;
+    l1_prepared_      = true;
     l1_prepared_wake_ = wake;
     return {};
 }
@@ -221,8 +215,7 @@ PowerResult PowerController::configure_l2_wake(WakeSelection wake)
         if (sleep_result != ESP_OK) return {sleep_result, sleep_result};
         sleep_result = rtc_gpio_pullup_en(m5sw::board::kPm1Irq);
         if (sleep_result != ESP_OK) return {sleep_result, sleep_result};
-        sleep_result = esp_sleep_enable_ext0_wakeup(
-            m5sw::board::kPm1Irq, 0);
+        sleep_result = esp_sleep_enable_ext0_wakeup(m5sw::board::kPm1Irq, 0);
         if (sleep_result != ESP_OK) return {sleep_result, sleep_result};
     }
     return {};
@@ -238,8 +231,7 @@ PowerResult PowerController::prepare_l2(WakeSelection wake)
     // configuration before suspend. Loading it temporarily disables advanced
     // power save and can leave the feature engine in a different state.
     if (wake == WakeSelection::none) {
-        i2c_bus_device_handle_t imu = i2c_bus_device_create(
-            bus_, m5sw::board::kImuAddress, 100000);
+        i2c_bus_device_handle_t imu = i2c_bus_device_create(bus_, m5sw::board::kImuAddress, 100000);
         if (imu == nullptr) return {ESP_ERR_NO_MEM, ESP_ERR_NO_MEM};
         esp_err_t peripheral_result = i2c_bus_write_byte(imu, 0x7C, 0x01);
         if (peripheral_result != ESP_OK) return {peripheral_result, peripheral_result};
@@ -248,7 +240,7 @@ PowerResult PowerController::prepare_l2(WakeSelection wake)
         if (peripheral_result != ESP_OK) return {peripheral_result, peripheral_result};
         std::uint8_t power_conf = 0;
         std::uint8_t power_ctrl = 0;
-        peripheral_result = i2c_bus_read_byte(imu, 0x7C, &power_conf);
+        peripheral_result       = i2c_bus_read_byte(imu, 0x7C, &power_conf);
         if (peripheral_result != ESP_OK) return {peripheral_result, peripheral_result};
         peripheral_result = i2c_bus_read_byte(imu, 0x7D, &power_ctrl);
         if (peripheral_result != ESP_OK) return {peripheral_result, peripheral_result};
@@ -275,14 +267,13 @@ PowerResult PowerController::prepare_l2(WakeSelection wake)
     result = from_ioe1(ioe1_.factory_reset());
     if (!result.ok()) return result;
     ioe1_initialized_ = false;
-    result = begin_ioe1();
+    result            = begin_ioe1();
     if (!result.ok()) return result;
 
     // Keep the factory-reset GPIO state intact. The reference L2 path leaves
     // these pins high impedance; driving reset/control lines low can sink
     // current continuously through board-level pull-ups.
-    i2c_bus_device_handle_t touch = i2c_bus_device_create(
-        bus_, m5sw::board::kTouchAddress, 100000);
+    i2c_bus_device_handle_t touch = i2c_bus_device_create(bus_, m5sw::board::kTouchAddress, 100000);
     if (touch == nullptr) return {ESP_ERR_NO_MEM, ESP_ERR_NO_MEM};
     vTaskDelay(pdMS_TO_TICKS(100));
     const esp_err_t touch_result = i2c_bus_write_byte(touch, 0xE5, 0x03);
@@ -292,14 +283,10 @@ PowerResult PowerController::prepare_l2(WakeSelection wake)
     if (!result.ok()) return result;
     // Match the reference L2 rail state exactly: keep DCDC/LDO alive for the
     // RTC/IMU retention domain and disable charge, BOOST/5V and LED output.
-    constexpr std::uint8_t kL2PowerMask = M5PM1_PWR_CFG_CHG_EN |
-                                          M5PM1_PWR_CFG_DCDC_EN |
-                                          M5PM1_PWR_CFG_LDO_EN |
-                                          M5PM1_PWR_CFG_BOOST_EN |
-                                          M5PM1_PWR_CFG_LED_CTRL;
-    constexpr std::uint8_t kL2PowerValue = M5PM1_PWR_CFG_DCDC_EN |
-                                           M5PM1_PWR_CFG_LDO_EN;
-    result = from_pm1(pm1_.set_power_config(kL2PowerMask, kL2PowerValue));
+    constexpr std::uint8_t kL2PowerMask = M5PM1_PWR_CFG_CHG_EN | M5PM1_PWR_CFG_DCDC_EN | M5PM1_PWR_CFG_LDO_EN |
+                                          M5PM1_PWR_CFG_BOOST_EN | M5PM1_PWR_CFG_LED_CTRL;
+    constexpr std::uint8_t kL2PowerValue = M5PM1_PWR_CFG_DCDC_EN | M5PM1_PWR_CFG_LDO_EN;
+    result                               = from_pm1(pm1_.set_power_config(kL2PowerMask, kL2PowerValue));
     if (!result.ok()) return result;
     result = from_pm1(pm1_.set_watchdog_timeout(0));
     if (!result.ok()) return result;
@@ -315,13 +302,12 @@ PowerResult PowerController::prepare_l2(WakeSelection wake)
         rtc_gpio_isolate(m5sw::board::kPm1Irq);  // PM1/IOE1 IRQ
     }
 
-    l2_prepared_ = true;
+    l2_prepared_      = true;
     l2_prepared_wake_ = wake;
     return {};
 }
 
-PowerResult PowerController::finalize_l2_peripherals(
-    L2Pm1IdleSleep pm1_idle_sleep)
+PowerResult PowerController::finalize_l2_peripherals(L2Pm1IdleSleep pm1_idle_sleep)
 {
     PowerResult result = from_ioe1(ioe1_.set_idle_sleep(1));
     if (!result.ok()) return result;
@@ -355,8 +341,7 @@ PowerResult PowerController::enter_l1(WakeSelection wake)
     return from_pm1(pm1_.shutdown());
 }
 
-PowerResult PowerController::enter_l2(WakeSelection wake,
-                                      L2Pm1IdleSleep pm1_idle_sleep)
+PowerResult PowerController::enter_l2(WakeSelection wake, L2Pm1IdleSleep pm1_idle_sleep)
 {
     if (!l2_prepared_ || l2_prepared_wake_ != wake) {
         const PowerResult result = prepare_l2(wake);

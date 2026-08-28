@@ -13,28 +13,24 @@
 
 namespace {
 
-constexpr char kTag[] = "wifi_periodic_traffic";
-constexpr std::uint32_t kConnectTimeoutMs = 15000;
-constexpr std::uint32_t kPowerOnSettleMs = 1000;
-constexpr std::uint32_t kPingTimeoutMs = 500;
-constexpr std::uint32_t kPreflightAttempts = 10;
-constexpr std::uint32_t kMinimumSuccessPercent = 90;
+constexpr char kTag[]                             = "wifi_periodic_traffic";
+constexpr std::uint32_t kConnectTimeoutMs         = 15000;
+constexpr std::uint32_t kPowerOnSettleMs          = 1000;
+constexpr std::uint32_t kPingTimeoutMs            = 500;
+constexpr std::uint32_t kPreflightAttempts        = 10;
+constexpr std::uint32_t kMinimumSuccessPercent    = 90;
 constexpr std::uint16_t kExpectedBeaconIntervalTu = 100;
-constexpr std::uint8_t kExpectedDtimPeriod = 3;
+constexpr std::uint8_t kExpectedDtimPeriod        = 3;
 
 static_assert(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ == 240,
               "Wi-Fi periodic traffic requires the fixed 240 MHz CPU configuration");
-static_assert(m5sw::wifi::kPeriodicTrafficIntervalMs == 1000,
-              "Wi-Fi periodic traffic requires a one-second period");
-static_assert(m5sw::wifi::kPeriodicTrafficPayloadBytes == 64,
-              "Wi-Fi periodic traffic requires a 64-byte ICMP payload");
+static_assert(m5sw::wifi::kPeriodicTrafficIntervalMs == 1000, "Wi-Fi periodic traffic requires a one-second period");
+static_assert(m5sw::wifi::kPeriodicTrafficPayloadBytes == 64, "Wi-Fi periodic traffic requires a 64-byte ICMP payload");
 
 [[noreturn]] void fail(const char* stage, esp_err_t error, int raw_error)
 {
-    ESP_LOGE(kTag, "BOARD_FAIL stage=%s error=%s raw=%d", stage,
-             esp_err_to_name(error), raw_error);
-    m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail,
-                                     "Wi-Fi periodic traffic setup failed");
+    ESP_LOGE(kTag, "BOARD_FAIL stage=%s error=%s raw=%d", stage, esp_err_to_name(error), raw_error);
+    m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail, "Wi-Fi periodic traffic setup failed");
     m5sw::test_support::hold_safe_idle();
 }
 
@@ -62,8 +58,7 @@ m5sw::wifi::TrafficStats run_preflight(m5sw::wifi::WifiController* wifi)
             fail("ping_preflight", ping_result.error, ping_result.raw_error);
         }
         if (attempt + 1U < kPreflightAttempts) {
-            vTaskDelayUntil(&last_wake,
-                            pdMS_TO_TICKS(m5sw::wifi::kPeriodicTrafficIntervalMs));
+            vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(m5sw::wifi::kPeriodicTrafficIntervalMs));
         }
     }
 
@@ -86,8 +81,7 @@ m5sw::wifi::TrafficStats run_preflight(m5sw::wifi::WifiController* wifi)
         if (!result.ok() && result.error != ESP_ERR_TIMEOUT) {
             fail("ping_runtime", result.error, result.raw_error);
         }
-        vTaskDelayUntil(&last_wake,
-                        pdMS_TO_TICKS(m5sw::wifi::kPeriodicTrafficIntervalMs));
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(m5sw::wifi::kPeriodicTrafficIntervalMs));
     }
 }
 
@@ -120,8 +114,7 @@ extern "C" void app_main(void)
     require("wifi_begin", wifi.begin());
     require("wifi_ps_none", wifi.set_power_save(m5sw::wifi::PowerSave::none));
     require("wifi_connect", wifi.connect(kConnectTimeoutMs));
-    if (wifi.state() != m5sw::wifi::State::connected ||
-        wifi.power_save() != m5sw::wifi::PowerSave::none) {
+    if (wifi.state() != m5sw::wifi::State::connected || wifi.power_save() != m5sw::wifi::PowerSave::none) {
         fail("wifi_state", ESP_ERR_INVALID_RESPONSE, ESP_ERR_INVALID_RESPONSE);
     }
 
@@ -132,21 +125,18 @@ extern "C" void app_main(void)
     }
 
     const m5sw::wifi::TrafficStats preflight = run_preflight(&wifi);
-    const std::uint32_t success_percent =
-        preflight.replies * 100U / preflight.attempts;
+    const std::uint32_t success_percent      = preflight.replies * 100U / preflight.attempts;
     ESP_LOGI(kTag,
-             "BOARD_OK PM1=1 IOE1=1 BASELINE=l2-active WIFI=connected PS=none TARGET=%s CHANNEL=%u RSSI_DBM=%d BEACON_TU_EXPECTED=%u DTIM_EXPECTED=%u PERIOD_MS=%u PAYLOAD_BYTES=%u TIMEOUT_MS=%u PREFLIGHT_ATTEMPTS=%u PREFLIGHT_REPLIES=%u PREFLIGHT_SUCCESS_PCT=%u MIN_SUCCESS_PCT=%u SCAN_AFTER_CONNECT=0 L1=on DISPLAY=0 TP=sleep IMU=sleep RTC=retained AUDIO=0 MOTOR=0 EXT5V=0",
-             CONFIG_M5SW_WIFI_TARGET_IPV4, static_cast<unsigned>(info.channel),
-             static_cast<int>(info.rssi_dbm),
-             static_cast<unsigned>(kExpectedBeaconIntervalTu),
-             static_cast<unsigned>(kExpectedDtimPeriod),
+             "BOARD_OK PM1=1 IOE1=1 BASELINE=l2-active WIFI=connected PS=none TARGET=%s CHANNEL=%u RSSI_DBM=%d "
+             "BEACON_TU_EXPECTED=%u DTIM_EXPECTED=%u PERIOD_MS=%u PAYLOAD_BYTES=%u TIMEOUT_MS=%u PREFLIGHT_ATTEMPTS=%u "
+             "PREFLIGHT_REPLIES=%u PREFLIGHT_SUCCESS_PCT=%u MIN_SUCCESS_PCT=%u SCAN_AFTER_CONNECT=0 L1=on DISPLAY=0 "
+             "TP=sleep IMU=sleep RTC=retained AUDIO=0 MOTOR=0 EXT5V=0",
+             CONFIG_M5SW_WIFI_TARGET_IPV4, static_cast<unsigned>(info.channel), static_cast<int>(info.rssi_dbm),
+             static_cast<unsigned>(kExpectedBeaconIntervalTu), static_cast<unsigned>(kExpectedDtimPeriod),
              static_cast<unsigned>(m5sw::wifi::kPeriodicTrafficIntervalMs),
-             static_cast<unsigned>(m5sw::wifi::kPeriodicTrafficPayloadBytes),
-             static_cast<unsigned>(kPingTimeoutMs),
-             static_cast<unsigned>(preflight.attempts),
-             static_cast<unsigned>(preflight.replies),
-             static_cast<unsigned>(success_percent),
-             static_cast<unsigned>(kMinimumSuccessPercent));
+             static_cast<unsigned>(m5sw::wifi::kPeriodicTrafficPayloadBytes), static_cast<unsigned>(kPingTimeoutMs),
+             static_cast<unsigned>(preflight.attempts), static_cast<unsigned>(preflight.replies),
+             static_cast<unsigned>(success_percent), static_cast<unsigned>(kMinimumSuccessPercent));
     require("test_ready", m5sw::test_support::mark_test_ready());
     run_periodic_traffic(&wifi);
 }

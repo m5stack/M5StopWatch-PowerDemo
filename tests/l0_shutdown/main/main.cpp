@@ -6,9 +6,9 @@
 #include "m5sw_test_support.hpp"
 
 namespace {
-constexpr char kTag[] = "l0_shutdown";
+constexpr char kTag[]              = "l0_shutdown";
 constexpr TickType_t kPrepareDelay = pdMS_TO_TICKS(3000);
-}
+}  // namespace
 
 extern "C" void app_main(void)
 {
@@ -20,28 +20,24 @@ extern "C" void app_main(void)
     const esp_err_t i2c_result = m5sw::board::initialize_i2c();
     if (i2c_result != ESP_OK) {
         ESP_LOGE(kTag, "BOARD_FAIL stage=i2c error=%s", esp_err_to_name(i2c_result));
-        m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail,
-                                         "I2C initialization failed");
+        m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail, "I2C initialization failed");
         m5sw::test_support::hold_safe_idle();
     }
 
-    i2c_bus_handle_t bus = nullptr;
+    i2c_bus_handle_t bus         = nullptr;
     const esp_err_t claim_result = m5sw::board::acquire_i2c(&bus);
     if (claim_result != ESP_OK) {
-        ESP_LOGE(kTag, "BOARD_FAIL stage=pm1_bus error=%s",
-                 esp_err_to_name(claim_result));
-        m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail,
-                                         "PM1 shared I2C claim failed");
+        ESP_LOGE(kTag, "BOARD_FAIL stage=pm1_bus error=%s", esp_err_to_name(claim_result));
+        m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail, "PM1 shared I2C claim failed");
         m5sw::test_support::hold_safe_idle();
     }
 
     m5sw::power::PowerController power;
     const m5sw::power::PowerResult begin_result = power.begin(bus);
     if (!begin_result.ok()) {
-        ESP_LOGE(kTag, "BOARD_FAIL stage=pm1_begin error=%s raw=%d",
-                 esp_err_to_name(begin_result.error), begin_result.raw_error);
-        m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail,
-                                         "PM1 initialization failed");
+        ESP_LOGE(kTag, "BOARD_FAIL stage=pm1_begin error=%s raw=%d", esp_err_to_name(begin_result.error),
+                 begin_result.raw_error);
+        m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail, "PM1 initialization failed");
         m5sw::test_support::hold_safe_idle();
     }
     ESP_LOGI(kTag, "BOARD_OK PM1=1");
@@ -51,10 +47,9 @@ extern "C" void app_main(void)
 
     const m5sw::power::PowerResult l0_result = power.enter_l0();
     if (!l0_result.ok()) {
-        ESP_LOGE(kTag, "TEST_FAIL stage=l0_enter error=%s raw=%d",
-                 esp_err_to_name(l0_result.error), l0_result.raw_error);
-        m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail,
-                                         "L0 shutdown failed");
+        ESP_LOGE(kTag, "TEST_FAIL stage=l0_enter error=%s raw=%d", esp_err_to_name(l0_result.error),
+                 l0_result.raw_error);
+        m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail, "L0 shutdown failed");
         m5sw::test_support::hold_safe_idle();
     }
 

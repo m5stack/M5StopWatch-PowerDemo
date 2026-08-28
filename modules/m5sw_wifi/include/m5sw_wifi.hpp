@@ -6,7 +6,7 @@
 
 namespace m5sw::wifi {
 
-inline constexpr std::uint32_t kPeriodicTrafficIntervalMs = 1000;
+inline constexpr std::uint32_t kPeriodicTrafficIntervalMs   = 1000;
 inline constexpr std::uint32_t kPeriodicTrafficPayloadBytes = 64;
 
 enum class PowerSave : std::uint8_t {
@@ -24,9 +24,12 @@ enum class State : std::uint8_t {
 
 struct WifiResult {
     esp_err_t error = ESP_OK;
-    int raw_error = 0;
+    int raw_error   = 0;
 
-    [[nodiscard]] bool ok() const { return error == ESP_OK; }
+    [[nodiscard]] bool ok() const
+    {
+        return error == ESP_OK;
+    }
 };
 
 struct NetworkInfo {
@@ -55,14 +58,13 @@ class WifiController final {
 public:
     WifiController() = default;
     ~WifiController();
-    WifiController(const WifiController&) = delete;
+    WifiController(const WifiController&)            = delete;
     WifiController& operator=(const WifiController&) = delete;
 
     // Public operations are caller-serialized; do not invoke them concurrently.
     // Initializes shared TCP/IP infrastructure and an owned STA interface.
     // Existing NVS contents are never erased when initialization fails.
-    [[nodiscard]] WifiResult begin(
-        PowerSave initial_power_save = PowerSave::none);
+    [[nodiscard]] WifiResult begin(PowerSave initial_power_save = PowerSave::none);
     // Connects using only the local Kconfig credentials and enables reconnects.
     [[nodiscard]] WifiResult connect(std::uint32_t timeout_ms);
     // Stops automatic reconnect and disconnects the owned station interface.

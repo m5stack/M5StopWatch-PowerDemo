@@ -13,21 +13,18 @@
 
 namespace {
 
-constexpr char kTag[] = "wifi_connected";
-constexpr std::uint32_t kConnectTimeoutMs = 15000;
-constexpr std::uint32_t kPowerOnSettleMs = 1000;
+constexpr char kTag[]                             = "wifi_connected";
+constexpr std::uint32_t kConnectTimeoutMs         = 15000;
+constexpr std::uint32_t kPowerOnSettleMs          = 1000;
 constexpr std::uint16_t kExpectedBeaconIntervalTu = 100;
-constexpr std::uint8_t kExpectedDtimPeriod = 3;
+constexpr std::uint8_t kExpectedDtimPeriod        = 3;
 
-static_assert(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ == 240,
-              "Wi-Fi connected requires the fixed project CPU configuration");
+static_assert(CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ == 240, "Wi-Fi connected requires the fixed project CPU configuration");
 
 [[noreturn]] void fail(const char* stage, esp_err_t error, int raw_error)
 {
-    ESP_LOGE(kTag, "BOARD_FAIL stage=%s error=%s raw=%d", stage,
-             esp_err_to_name(error), raw_error);
-    m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail,
-                                     "Wi-Fi connected setup failed");
+    ESP_LOGE(kTag, "BOARD_FAIL stage=%s error=%s raw=%d", stage, esp_err_to_name(error), raw_error);
+    m5sw::test_support::report_final(m5sw::test_support::FinalStatus::fail, "Wi-Fi connected setup failed");
     m5sw::test_support::hold_safe_idle();
 }
 
@@ -72,8 +69,7 @@ extern "C" void app_main(void)
     require("wifi_begin", wifi.begin());
     require("wifi_ps_none", wifi.set_power_save(m5sw::wifi::PowerSave::none));
     require("wifi_connect", wifi.connect(kConnectTimeoutMs));
-    if (wifi.state() != m5sw::wifi::State::connected ||
-        wifi.power_save() != m5sw::wifi::PowerSave::none) {
+    if (wifi.state() != m5sw::wifi::State::connected || wifi.power_save() != m5sw::wifi::PowerSave::none) {
         fail("wifi_state", ESP_ERR_INVALID_RESPONSE, ESP_ERR_INVALID_RESPONSE);
     }
 
@@ -84,10 +80,11 @@ extern "C" void app_main(void)
     }
 
     ESP_LOGI(kTag,
-             "BOARD_OK PM1=1 IOE1=1 BASELINE=l2-active WIFI=connected PS=none CHANNEL=%u RSSI_DBM=%d BEACON_TU_EXPECTED=%u DTIM_EXPECTED=%u APP_TRAFFIC=0 SCAN_AFTER_CONNECT=0 L1=on DISPLAY=0 TP=sleep IMU=sleep RTC=retained AUDIO=0 MOTOR=0 EXT5V=0",
+             "BOARD_OK PM1=1 IOE1=1 BASELINE=l2-active WIFI=connected PS=none CHANNEL=%u RSSI_DBM=%d "
+             "BEACON_TU_EXPECTED=%u DTIM_EXPECTED=%u APP_TRAFFIC=0 SCAN_AFTER_CONNECT=0 L1=on DISPLAY=0 TP=sleep "
+             "IMU=sleep RTC=retained AUDIO=0 MOTOR=0 EXT5V=0",
              static_cast<unsigned>(info.channel), static_cast<int>(info.rssi_dbm),
-             static_cast<unsigned>(kExpectedBeaconIntervalTu),
-             static_cast<unsigned>(kExpectedDtimPeriod));
+             static_cast<unsigned>(kExpectedBeaconIntervalTu), static_cast<unsigned>(kExpectedDtimPeriod));
     require("test_ready", m5sw::test_support::mark_test_ready());
     m5sw::test_support::hold_safe_idle();
 }

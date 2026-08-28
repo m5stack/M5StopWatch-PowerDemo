@@ -14,8 +14,8 @@ namespace {
 
 constexpr char kTag[] = "m5sw_test";
 
-bool g_initialized = false;
-bool g_test_ready = false;
+bool g_initialized        = false;
+bool g_test_ready         = false;
 portMUX_TYPE g_state_lock = portMUX_INITIALIZER_UNLOCKED;
 
 std::uint32_t fnv1a(const char* text)
@@ -42,22 +42,21 @@ esp_err_t initialize(TestContext* context)
         return ESP_ERR_INVALID_STATE;
     }
     g_initialized = true;
-    g_test_ready = false;
+    g_test_ready  = false;
     portEXIT_CRITICAL(&g_state_lock);
 
     const esp_app_desc_t* app = esp_app_get_description();
-    context->test_id = CONFIG_M5SW_TEST_ID;
+    context->test_id          = CONFIG_M5SW_TEST_ID;
     context->firmware_version = app->version;
-    context->config_hash = fnv1a(CONFIG_M5SW_CONFIG_ID);
-    context->reset_reason = esp_reset_reason();
-    context->wake_cause = esp_sleep_get_wakeup_cause();
+    context->config_hash      = fnv1a(CONFIG_M5SW_CONFIG_ID);
+    context->reset_reason     = esp_reset_reason();
+    context->wake_cause       = esp_sleep_get_wakeup_cause();
 
     ESP_LOGI(kTag,
              "TEST_START test_id=%s firmware_version=%s config_id=%s "
              "config_hash=%08" PRIx32 " reset_reason=%s wake_cause=%s",
-             context->test_id, context->firmware_version, CONFIG_M5SW_CONFIG_ID,
-             context->config_hash, reset_reason_name(context->reset_reason),
-             wake_cause_name(context->wake_cause));
+             context->test_id, context->firmware_version, CONFIG_M5SW_CONFIG_ID, context->config_hash,
+             reset_reason_name(context->reset_reason), wake_cause_name(context->wake_cause));
     return ESP_OK;
 }
 

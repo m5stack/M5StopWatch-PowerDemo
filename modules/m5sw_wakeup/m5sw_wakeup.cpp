@@ -27,13 +27,12 @@ WakeupResult WakeController::begin(i2c_bus_handle_t bus)
     if (bus == nullptr) return {ESP_ERR_INVALID_ARG, ESP_ERR_INVALID_ARG};
     WakeupResult result = from_pm1(pm1_.begin(bus));
     if (!result.ok()) return result;
-    result = from_imu(imu_.begin(bus));
+    result       = from_imu(imu_.begin(bus));
     initialized_ = result.ok();
     return result;
 }
 
-WakeupResult WakeController::select_source(WakeSelection selection,
-                                           ImuWakeProfile imu_profile)
+WakeupResult WakeController::select_source(WakeSelection selection, ImuWakeProfile imu_profile)
 {
     if (!initialized_) return {ESP_ERR_INVALID_STATE, ESP_ERR_INVALID_STATE};
 
@@ -45,8 +44,7 @@ WakeupResult WakeController::select_source(WakeSelection selection,
     if (!result.ok()) return result;
 
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-    if (selection == WakeSelection::rtc || selection == WakeSelection::imu ||
-        selection == WakeSelection::rtc_imu) {
+    if (selection == WakeSelection::rtc || selection == WakeSelection::imu || selection == WakeSelection::rtc_imu) {
         result = from_pm1(pm1_.configure_gpio_wake(m5sw::power::Pm1Gpio::rtc_imu));
         if (!result.ok()) return result;
     }
@@ -65,15 +63,13 @@ WakeupResult WakeController::select_source(WakeSelection selection,
     return {};
 }
 
-WakeupResult WakeController::capture(const RtcFlags& rtc_flags,
-                                     const ImuStatus& imu_status,
-                                     WakeSnapshot* snapshot)
+WakeupResult WakeController::capture(const RtcFlags& rtc_flags, const ImuStatus& imu_status, WakeSnapshot* snapshot)
 {
     if (!initialized_ || snapshot == nullptr) {
         return {snapshot == nullptr ? ESP_ERR_INVALID_ARG : ESP_ERR_INVALID_STATE,
                 snapshot == nullptr ? ESP_ERR_INVALID_ARG : ESP_ERR_INVALID_STATE};
     }
-    *snapshot = {};
+    *snapshot                        = {};
     m5sw::power::DriverResult result = pm1_.read_wake_source(&snapshot->pm1_wake);
     if (!result.ok()) return from_pm1(result);
     result = pm1_.read_gpio_irq(&snapshot->pm1_gpio_irq);
@@ -82,7 +78,7 @@ WakeupResult WakeController::capture(const RtcFlags& rtc_flags,
     if (!result.ok()) return from_pm1(result);
     result = pm1_.read_system_irq(&snapshot->pm1_system_irq);
     if (!result.ok()) return from_pm1(result);
-    snapshot->rtc_events = rtc_flags.events();
+    snapshot->rtc_events     = rtc_flags.events();
     snapshot->imu_any_motion = imu_status.any_motion;
     // GPIO4 Port wake may be represented in either PM1's retained wake-source
     // mask or its GPIO IRQ status, depending on whether the edge was sampled

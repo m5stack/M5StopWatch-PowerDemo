@@ -11,29 +11,33 @@ namespace m5sw::power {
 
 struct Ioe1Result {
     esp_err_t error = ESP_OK;
-    int raw_error = M5IOE1_OK;
+    int raw_error   = M5IOE1_OK;
 
-    [[nodiscard]] bool ok() const { return error == ESP_OK; }
+    [[nodiscard]] bool ok() const
+    {
+        return error == ESP_OK;
+    }
 };
 
 class Ioe1Adapter final {
 public:
-    Ioe1Adapter() = default;
-    Ioe1Adapter(const Ioe1Adapter&) = delete;
+    Ioe1Adapter()                              = default;
+    Ioe1Adapter(const Ioe1Adapter&)            = delete;
     Ioe1Adapter& operator=(const Ioe1Adapter&) = delete;
 
     // Borrows the shared bus and initializes IOE1 at the board address 0x4F.
-    [[nodiscard]] Ioe1Result begin(i2c_bus_handle_t bus,
-                                   std::uint32_t speed_hz = 100000);
-    [[nodiscard]] bool initialized() const { return initialized_; }
+    [[nodiscard]] Ioe1Result begin(i2c_bus_handle_t bus, std::uint32_t speed_hz = 100000);
+    [[nodiscard]] bool initialized() const
+    {
+        return initialized_;
+    }
 
     // Clears all IOE1 state and waits until the reset device responds at 100 kHz.
     // The adapter must be begun again before use.
     [[nodiscard]] Ioe1Result factory_reset();
 
     // Applies the typed IOE1 sleep, speed, wake-edge and pull configuration, then reads it back.
-    [[nodiscard]] Ioe1Result configure_i2c(bool sleep_enabled,
-                                            std::uint32_t speed_hz);
+    [[nodiscard]] Ioe1Result configure_i2c(bool sleep_enabled, std::uint32_t speed_hz);
     // Drives a board-mapped output pin and leaves it configured as an output.
     [[nodiscard]] Ioe1Result set_pin(m5sw::board::IoePin pin, bool high);
     // Reads the cached output state; this is not a physical input sampling operation.
@@ -51,12 +55,11 @@ public:
 
 private:
     [[nodiscard]] Ioe1Result result(m5ioe1_err_t raw) const;
-    [[nodiscard]] Ioe1Result verify_i2c_config(bool sleep_enabled,
-                                               std::uint32_t speed_hz);
+    [[nodiscard]] Ioe1Result verify_i2c_config(bool sleep_enabled, std::uint32_t speed_hz);
 
     M5IOE1 ioe1_;
     i2c_bus_handle_t bus_ = nullptr;
-    bool initialized_ = false;
+    bool initialized_     = false;
 };
 
 }  // namespace m5sw::power

@@ -20,8 +20,8 @@
 namespace m5sw::wifi {
 namespace {
 
-constexpr char kTag[] = "m5sw_wifi";
-constexpr EventBits_t kConnectedBit = BIT0;
+constexpr char kTag[]                        = "m5sw_wifi";
+constexpr EventBits_t kConnectedBit          = BIT0;
 constexpr std::uint8_t kConnectionRetryCount = 3;
 
 WifiResult result(esp_err_t error)
@@ -46,7 +46,10 @@ wifi_ps_type_t native_power_save(PowerSave mode)
 
 class WifiController::Impl final {
 public:
-    ~Impl() { (void)deinitialize(); }
+    ~Impl()
+    {
+        (void)deinitialize();
+    }
 
     WifiResult begin(PowerSave initial_power_save)
     {
@@ -68,16 +71,14 @@ public:
         if (station_netif_ == nullptr) return rollback(ESP_ERR_NO_MEM);
 
         wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
-        error = esp_wifi_init(&init_config);
+        error                          = esp_wifi_init(&init_config);
         if (error != ESP_OK) return rollback(error);
         wifi_initialized_ = true;
 
-        error = esp_event_handler_instance_register(
-            WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, this, &wifi_handler_);
+        error = esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, this, &wifi_handler_);
         if (error != ESP_OK) return rollback(error);
         wifi_handler_registered_ = true;
-        error = esp_event_handler_instance_register(
-            IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, this, &ip_handler_);
+        error = esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, this, &ip_handler_);
         if (error != ESP_OK) return rollback(error);
         ip_handler_registered_ = true;
 
@@ -102,22 +103,20 @@ public:
         if (!credentials_configured() || timeout_ms == 0U) return result(ESP_ERR_INVALID_ARG);
         if (state_.load() == State::connected) return {};
 
-        wifi_config_t config = {};
-        const std::size_t ssid_length = std::strlen(CONFIG_M5SW_WIFI_SSID);
+        wifi_config_t config              = {};
+        const std::size_t ssid_length     = std::strlen(CONFIG_M5SW_WIFI_SSID);
         const std::size_t password_length = std::strlen(CONFIG_M5SW_WIFI_PASSWORD);
-        if (ssid_length >= sizeof(config.sta.ssid) ||
-            password_length >= sizeof(config.sta.password)) {
+        if (ssid_length >= sizeof(config.sta.ssid) || password_length >= sizeof(config.sta.password)) {
             return result(ESP_ERR_INVALID_SIZE);
         }
         std::memcpy(config.sta.ssid, CONFIG_M5SW_WIFI_SSID, ssid_length);
         std::memcpy(config.sta.password, CONFIG_M5SW_WIFI_PASSWORD, password_length);
-        config.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
-        config.sta.sort_method = WIFI_CONNECT_AP_BY_SIGNAL;
-        config.sta.listen_interval = CONFIG_M5SW_WIFI_LISTEN_INTERVAL;
-        config.sta.threshold.rssi = -127;
-        config.sta.threshold.authmode =
-            password_length == 0U ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA2_PSK;
-        config.sta.failure_retry_cnt = kConnectionRetryCount;
+        config.sta.scan_method        = WIFI_ALL_CHANNEL_SCAN;
+        config.sta.sort_method        = WIFI_CONNECT_AP_BY_SIGNAL;
+        config.sta.listen_interval    = CONFIG_M5SW_WIFI_LISTEN_INTERVAL;
+        config.sta.threshold.rssi     = -127;
+        config.sta.threshold.authmode = password_length == 0U ? WIFI_AUTH_OPEN : WIFI_AUTH_WPA2_PSK;
+        config.sta.failure_retry_cnt  = kConnectionRetryCount;
 
         esp_err_t error = esp_wifi_set_config(WIFI_IF_STA, &config);
         if (error != ESP_OK) return result(error);
@@ -131,8 +130,8 @@ public:
             return result(error);
         }
 
-        const EventBits_t bits = xEventGroupWaitBits(
-            event_group_, kConnectedBit, pdFALSE, pdTRUE, pdMS_TO_TICKS(timeout_ms));
+        const EventBits_t bits =
+            xEventGroupWaitBits(event_group_, kConnectedBit, pdFALSE, pdTRUE, pdMS_TO_TICKS(timeout_ms));
         return (bits & kConnectedBit) != 0U ? WifiResult{} : result(ESP_ERR_TIMEOUT);
     }
 
@@ -150,10 +149,10 @@ public:
     {
         if (!initialized_.load()) return result(ESP_ERR_INVALID_STATE);
         const wifi_ps_type_t expected = native_power_save(mode);
-        esp_err_t error = esp_wifi_set_ps(expected);
+        esp_err_t error               = esp_wifi_set_ps(expected);
         if (error != ESP_OK) return result(error);
         wifi_ps_type_t actual = WIFI_PS_MIN_MODEM;
-        error = esp_wifi_get_ps(&actual);
+        error                 = esp_wifi_get_ps(&actual);
         if (error != ESP_OK) return result(error);
         if (actual != expected) return result(ESP_ERR_INVALID_RESPONSE);
         power_save_.store(mode);
@@ -163,17 +162,16 @@ public:
     WifiResult scan(std::uint16_t* access_point_count)
     {
         if (!initialized_.load() || access_point_count == nullptr) {
-            return result(access_point_count == nullptr ? ESP_ERR_INVALID_ARG
-                                                        : ESP_ERR_INVALID_STATE);
+            return result(access_point_count == nullptr ? ESP_ERR_INVALID_ARG : ESP_ERR_INVALID_STATE);
         }
         if (state_.load() != State::connected) return result(ESP_ERR_INVALID_STATE);
 
         wifi_scan_config_t config = {};
-        config.show_hidden = false;
-        config.scan_type = WIFI_SCAN_TYPE_ACTIVE;
-        esp_err_t error = esp_wifi_scan_start(&config, true);
+        config.show_hidden        = false;
+        config.scan_type          = WIFI_SCAN_TYPE_ACTIVE;
+        esp_err_t error           = esp_wifi_scan_start(&config, true);
         if (error != ESP_OK) return result(error);
-        error = esp_wifi_scan_get_ap_num(access_point_count);
+        error                       = esp_wifi_scan_get_ap_num(access_point_count);
         const esp_err_t clear_error = esp_wifi_clear_ap_list();
         if (error != ESP_OK) return result(error);
         return result(clear_error);
@@ -198,20 +196,20 @@ public:
         xSemaphoreTake(ping_done_, 0);
         last_ping_succeeded_.store(false);
 
-        esp_ping_config_t config = ESP_PING_DEFAULT_CONFIG();
-        config.count = 1;
-        config.interval_ms = 0;
-        config.timeout_ms = timeout_ms;
-        config.data_size = kPeriodicTrafficPayloadBytes;
-        config.target_addr = target;
+        esp_ping_config_t config       = ESP_PING_DEFAULT_CONFIG();
+        config.count                   = 1;
+        config.interval_ms             = 0;
+        config.timeout_ms              = timeout_ms;
+        config.data_size               = kPeriodicTrafficPayloadBytes;
+        config.target_addr             = target;
         esp_ping_callbacks_t callbacks = {};
-        callbacks.cb_args = this;
-        callbacks.on_ping_success = &on_ping_success;
-        callbacks.on_ping_timeout = &on_ping_timeout;
-        callbacks.on_ping_end = &on_ping_end;
+        callbacks.cb_args              = this;
+        callbacks.on_ping_success      = &on_ping_success;
+        callbacks.on_ping_timeout      = &on_ping_timeout;
+        callbacks.on_ping_end          = &on_ping_end;
 
         esp_ping_handle_t handle = nullptr;
-        esp_err_t error = esp_ping_new_session(&config, &callbacks, &handle);
+        esp_err_t error          = esp_ping_new_session(&config, &callbacks, &handle);
         if (error != ESP_OK) {
             ping_active_.store(false);
             return result(error);
@@ -223,8 +221,7 @@ public:
             return result(error);
         }
 
-        const BaseType_t completed = xSemaphoreTake(
-            ping_done_, pdMS_TO_TICKS(timeout_ms + 500U));
+        const BaseType_t completed = xSemaphoreTake(ping_done_, pdMS_TO_TICKS(timeout_ms + 500U));
         if (completed != pdTRUE) {
             (void)esp_ping_stop(handle);
             // The ping task is still inside its bounded receive call. Wait for
@@ -243,18 +240,18 @@ public:
         if (state_.load() != State::connected) return result(ESP_ERR_INVALID_STATE);
 
         wifi_ap_record_t record = {};
-        esp_err_t error = esp_wifi_sta_get_ap_info(&record);
+        esp_err_t error         = esp_wifi_sta_get_ap_info(&record);
         if (error != ESP_OK) return result(error);
         wifi_config_t station_config = {};
-        error = esp_wifi_get_config(WIFI_IF_STA, &station_config);
+        error                        = esp_wifi_get_config(WIFI_IF_STA, &station_config);
         if (error != ESP_OK) return result(error);
         esp_netif_ip_info_t ip_info = {};
-        error = esp_netif_get_ip_info(station_netif_, &ip_info);
+        error                       = esp_netif_get_ip_info(station_netif_, &ip_info);
         if (error != ESP_OK) return result(error);
-        info->rssi_dbm = record.rssi;
-        info->channel = record.primary;
+        info->rssi_dbm        = record.rssi;
+        info->channel         = record.primary;
         info->listen_interval = station_config.sta.listen_interval;
-        info->ipv4_address = ip_info.ip.addr;
+        info->ipv4_address    = ip_info.ip.addr;
         return {};
     }
 
@@ -272,14 +269,12 @@ public:
             wifi_started_ = false;
         }
         if (ip_handler_registered_) {
-            const esp_err_t error = esp_event_handler_instance_unregister(
-                IP_EVENT, IP_EVENT_STA_GOT_IP, ip_handler_);
+            const esp_err_t error = esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, ip_handler_);
             if (first_error == ESP_OK && error != ESP_OK) first_error = error;
             ip_handler_registered_ = false;
         }
         if (wifi_handler_registered_) {
-            const esp_err_t error = esp_event_handler_instance_unregister(
-                WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_handler_);
+            const esp_err_t error = esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_handler_);
             if (first_error == ESP_OK && error != ESP_OK) first_error = error;
             wifi_handler_registered_ = false;
         }
@@ -303,11 +298,26 @@ public:
         return result(first_error);
     }
 
-    bool credentials_configured() const { return CONFIG_M5SW_WIFI_SSID[0] != '\0'; }
-    bool target_configured() const { return CONFIG_M5SW_WIFI_TARGET_IPV4[0] != '\0'; }
-    bool initialized() const { return initialized_.load(); }
-    State state() const { return state_.load(); }
-    PowerSave power_save() const { return power_save_.load(); }
+    bool credentials_configured() const
+    {
+        return CONFIG_M5SW_WIFI_SSID[0] != '\0';
+    }
+    bool target_configured() const
+    {
+        return CONFIG_M5SW_WIFI_TARGET_IPV4[0] != '\0';
+    }
+    bool initialized() const
+    {
+        return initialized_.load();
+    }
+    State state() const
+    {
+        return state_.load();
+    }
+    PowerSave power_save() const
+    {
+        return power_save_.load();
+    }
 
     TrafficStats traffic_stats() const
     {
@@ -326,23 +336,20 @@ private:
         return result(error);
     }
 
-    static void event_handler(void* argument, esp_event_base_t base,
-                              std::int32_t event_id, void* event_data)
+    static void event_handler(void* argument, esp_event_base_t base, std::int32_t event_id, void* event_data)
     {
         auto* self = static_cast<Impl*>(argument);
         if (base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
             auto* event = static_cast<wifi_event_sta_disconnected_t*>(event_data);
             xEventGroupClearBits(self->event_group_, kConnectedBit);
             self->state_.store(State::disconnected);
-            ESP_LOGW(kTag, "STA disconnected reason=%u",
-                     static_cast<unsigned>(event->reason));
+            ESP_LOGW(kTag, "STA disconnected reason=%u", static_cast<unsigned>(event->reason));
             if (self->reconnect_enabled_.load() && self->initialized_.load()) {
                 self->state_.store(State::connecting);
                 const esp_err_t error = esp_wifi_connect();
                 if (error != ESP_OK) {
                     self->state_.store(State::disconnected);
-                    ESP_LOGE(kTag, "STA reconnect request failed: %s",
-                             esp_err_to_name(error));
+                    ESP_LOGE(kTag, "STA reconnect request failed: %s", esp_err_to_name(error));
                 }
             }
         } else if (base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
@@ -355,10 +362,9 @@ private:
 
     static void on_ping_success(esp_ping_handle_t handle, void* argument)
     {
-        auto* self = static_cast<Impl*>(argument);
+        auto* self           = static_cast<Impl*>(argument);
         std::uint32_t rtt_ms = 0;
-        (void)esp_ping_get_profile(handle, ESP_PING_PROF_TIMEGAP,
-                                   &rtt_ms, sizeof(rtt_ms));
+        (void)esp_ping_get_profile(handle, ESP_PING_PROF_TIMEGAP, &rtt_ms, sizeof(rtt_ms));
         self->ping_attempts_.fetch_add(1);
         self->ping_replies_.fetch_add(1);
         self->total_rtt_ms_.fetch_add(rtt_ms);
@@ -381,15 +387,15 @@ private:
         xSemaphoreGive(self->ping_done_);
     }
 
-    EventGroupHandle_t event_group_ = nullptr;
-    SemaphoreHandle_t ping_done_ = nullptr;
-    esp_netif_t* station_netif_ = nullptr;
+    EventGroupHandle_t event_group_            = nullptr;
+    SemaphoreHandle_t ping_done_               = nullptr;
+    esp_netif_t* station_netif_                = nullptr;
     esp_event_handler_instance_t wifi_handler_ = nullptr;
-    esp_event_handler_instance_t ip_handler_ = nullptr;
-    bool wifi_initialized_ = false;
-    bool wifi_started_ = false;
-    bool wifi_handler_registered_ = false;
-    bool ip_handler_registered_ = false;
+    esp_event_handler_instance_t ip_handler_   = nullptr;
+    bool wifi_initialized_                     = false;
+    bool wifi_started_                         = false;
+    bool wifi_handler_registered_              = false;
+    bool ip_handler_registered_                = false;
     std::atomic_bool initialized_{false};
     std::atomic_bool reconnect_enabled_{false};
     std::atomic_bool ping_active_{false};
@@ -458,14 +464,12 @@ bool WifiController::initialized() const
 
 bool WifiController::credentials_configured() const
 {
-    return impl_ != nullptr ? impl_->credentials_configured()
-                            : CONFIG_M5SW_WIFI_SSID[0] != '\0';
+    return impl_ != nullptr ? impl_->credentials_configured() : CONFIG_M5SW_WIFI_SSID[0] != '\0';
 }
 
 bool WifiController::target_configured() const
 {
-    return impl_ != nullptr ? impl_->target_configured()
-                            : CONFIG_M5SW_WIFI_TARGET_IPV4[0] != '\0';
+    return impl_ != nullptr ? impl_->target_configured() : CONFIG_M5SW_WIFI_TARGET_IPV4[0] != '\0';
 }
 
 State WifiController::state() const

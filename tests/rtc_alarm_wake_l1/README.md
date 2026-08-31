@@ -1,14 +1,16 @@
 # RTC Alarm Wake L1 Test
 
+[English](README.md) | [简体中文](README_CN.md)
+
 ## Purpose
 
-This firmware validates RX8130 calendar-alarm wake while the M5StopWatch remains in L1 standby.
+This firmware validates wake-up from an RX8130 calendar alarm and measures whole-board input current while the M5StopWatch waits in L1 standby.
 
 ## Enabled Modules
 
 - M5PM1 power manager
 - RX8130 RTC calendar alarm
-- BMI270 IMU for non-target wake rejection
+- BMI270 IMU for ruling out non-target wake events
 - PM1 GPIO0 wake path
 - Shared wake and test support
 
@@ -17,26 +19,25 @@ This firmware validates RX8130 calendar-alarm wake while the M5StopWatch remains
 | Module | Configuration |
 |---|---|
 | M5PM1 | I2C address `0x6E`, 100 kHz; LDO hold enabled; GPIO0 pull-up input with falling-edge wake; GPIO4 wake disabled |
-| RX8130 | I2C address `0x32`, 100 kHz; known-time baseline; one-shot calendar alarm set for `120 s` after the baseline |
-| BMI270 | I2C address `0x68`, 100 kHz; Any-motion disabled; status checked only to reject false triggers |
+| RX8130 | I2C address `0x32`, 100 kHz; known RTC time; one-shot calendar alarm set to trigger after `120 s` |
+| BMI270 | I2C address `0x68`, 100 kHz; any-motion detection disabled; status checked only to rule out non-target wake events |
 | Wake path | RX8130 IRQ -> PM1 GPIO0 -> PM1 L1 wake |
-| Acceptance | RTC alarm flag and PM1 GPIO0 evidence must agree; IMU Any-motion must be false |
+| Acceptance | RTC alarm flag and PM1 GPIO0 status must agree; the IMU any-motion flag must remain clear |
 
 ## Runtime Mode
 
-The firmware prepares the L1 power state, normalizes a known RTC baseline to the alarm target, configures a one-shot alarm, disables unrelated wake sources, reports readiness, and enters L1 standby. After wake it verifies the RTC alarm event and rejects IMU-triggered false passes.
+The firmware prepares the L1 power state, sets a known RTC baseline, calculates the alarm time two minutes later, configures a one-shot alarm, disables unrelated wake sources, reports readiness, and enters L1 standby. After wake, it verifies the RTC alarm event and rules out a non-target IMU wake event.
 
-The current formal target is a 120-second alarm.
+This test uses a 120-second alarm delay.
 
-## Power
+## Measured Current
 
-The reported current is the `WINDOW Avg` from the selected capture.
+The current shown in the measurement results is the `WINDOW Avg` from the measurement record.
 
 - 3.7 V: 20.44 uA
 - 4.2 V: 20.62 uA
 
-![RTC alarm wake L1, 3.7 V](../../docs/power-graphs/rtc_alarm_wake_l1/3.7v.png)
-![RTC alarm wake L1, 4.2 V](../../docs/power-graphs/rtc_alarm_wake_l1/4.2v.png)
+[View the measurement graphs](../../docs/power-graphs/README.md).
 
 ## Configuration
 
@@ -53,4 +54,4 @@ idf.py -p <PORT> flash
 idf.py -p <PORT> monitor
 ```
 
-Confirm `TEST_START`, `RTC_CONFIG_OK`, `BOARD_OK`, `WAKE_ARMED`, `TEST_READY`, `WAKE_CAPTURE`, `WAKE_CLEAR_OK` and `TEST_PASS`. Disconnect Type-C before formal power measurement.
+Confirm `TEST_START`, `RTC_CONFIG_OK`, `BOARD_OK`, `WAKE_ARMED`, `TEST_READY`, `WAKE_CAPTURE`, `WAKE_CLEAR_OK` and `TEST_PASS`. Disconnect USB Type-C before power measurement.

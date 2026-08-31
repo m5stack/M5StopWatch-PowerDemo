@@ -1,8 +1,10 @@
-# Display-Only Test
+# Display Workload Test
+
+[English](README.md) | [简体中文](README_CN.md)
 
 ## Purpose
 
-This firmware measures the AMOLED display load independently from the other board peripherals.
+This firmware measures whole-board input current with the AMOLED enabled while other optional peripheral loads are disabled.
 
 ## Enabled Modules
 
@@ -25,15 +27,14 @@ This firmware measures the AMOLED display load independently from the other boar
 
 The firmware enables the display at 100% brightness and renders a white frame. CPU frequency is fixed at 240 MHz. The L1 power domain, touch controller, RTC, IMU, Wi-Fi, audio, motor and external 5 V output are disabled. The static display state is held after `TEST_READY` without later I2C activity.
 
-## Power
+## Measured Current
 
-The reported current is the `WINDOW Avg` from the selected capture.
+The current shown in the measurement results is the `WINDOW Avg` from the measurement record.
 
 - 3.7 V: 154.45 mA
 - 4.2 V: 144.24 mA
 
-![Display-only, 3.7 V](../../docs/power-graphs/display_only/3.7v.png)
-![Display-only, 4.2 V](../../docs/power-graphs/display_only/4.2v.png)
+[View the measurement graphs](../../docs/power-graphs/README.md).
 
 ## Configuration
 
@@ -50,7 +51,7 @@ idf.py -p <PORT> flash
 idf.py -p <PORT> monitor
 ```
 
-Use the monitor only for Stage A. Disconnect Type-C before Stage B power measurement.
+Use the serial monitor only for functional validation. Disconnect USB Type-C before power measurement.
 
 ## Expected Validation
 

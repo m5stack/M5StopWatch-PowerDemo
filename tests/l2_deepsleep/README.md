@@ -1,8 +1,10 @@
 # L2 Deep Sleep Test
 
+[English](README.md) | [简体中文](README_CN.md)
+
 ## Purpose
 
-This firmware measures the M5StopWatch no-wake L2 deep-sleep state and verifies that external peripheral loads converge before ESP32-S3 deep sleep.
+This firmware measures whole-board input current in the M5StopWatch L2 deep-sleep state with no wake source enabled. It also verifies that external peripherals enter their specified low-power states before ESP32-S3 Deep Sleep.
 
 ## Enabled Modules
 
@@ -18,7 +20,7 @@ RTC and IMU wake sources are disabled for this test. Display, touch, Wi-Fi, audi
 | Module | Configuration |
 |---|---|
 | M5PM1 | I2C address `0x6E`, 100 kHz; DCDC and LDO enabled; charger, boost and status LED disabled; LDO hold enabled; watchdog timeout `0`; I2C idle-sleep time `1 s` |
-| M5IOE1 | I2C address `0x4F`, 100 kHz; factory reset and safe high-impedance load state; PWM stopped; idle-sleep time `1 s` |
+| M5IOE1 | I2C address `0x4F`, 100 kHz; factory reset with load-control outputs left in a safe high-impedance state; PWM stopped; idle-sleep time `1 s` |
 | ESP32-S3 | Deep Sleep with all wake sources disabled |
 | Wake sources | None; PM1 aggregate IRQ output is not enabled |
 | Preparation | 3-second application delay, followed by the final 1-second L2 settling interval |
@@ -27,15 +29,14 @@ RTC and IMU wake sources are disabled for this test. Display, touch, Wi-Fi, audi
 
 The firmware initializes PM1, prepares L2 with `WakeSelection::none`, disables external loads, configures safe high-impedance states and I2C idle sleep, reports readiness, waits three seconds, and enters ESP32-S3 deep sleep without a wake source.
 
-## Power
+## Measured Current
 
-The reported current is the `WINDOW Avg` from the selected representative capture.
+The current shown in the measurement results is the `WINDOW Avg` from the measurement record.
 
 - 3.7 V: 90.06 uA
 - 4.2 V: 51.65 uA
 
-![L2 deep sleep, 3.7 V](../../docs/power-graphs/l2_deep_sleep/3.7v.png)
-![L2 deep sleep, 4.2 V](../../docs/power-graphs/l2_deep_sleep/4.2v.png)
+[View the measurement graphs](../../docs/power-graphs/README.md).
 
 ## Configuration
 
@@ -60,7 +61,7 @@ idf.py -p <PORT> flash
 idf.py -p <PORT> monitor
 ```
 
-Use serial monitoring only to confirm Stage A preparation. Disconnect Type-C and stop monitoring for Stage B power measurement.
+Use serial monitoring only for functional validation. Disconnect USB Type-C and stop monitoring before power measurement.
 
 ## Expected Validation
 

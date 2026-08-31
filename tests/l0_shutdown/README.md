@@ -1,8 +1,10 @@
 # L0 Shutdown Test
 
+[English](README.md) | [简体中文](README_CN.md)
+
 ## Purpose
 
-This firmware measures the M5StopWatch L0 shutdown state. It verifies the PM1 shutdown command and the battery-powered static current path.
+This firmware measures whole-board input current in the M5StopWatch L0 shutdown state. It also verifies the PM1 shutdown command and the quiescent-current path under battery-equivalent power.
 
 ## Enabled Modules
 
@@ -24,17 +26,16 @@ RTC, BMI270, M5IOE1, display, touch, Wi-Fi, audio and motor functions are intent
 
 ## Runtime Mode
 
-The firmware initializes the shared I2C bus, starts PM1, reports board readiness, waits three seconds, and enters L0 shutdown. `TEST_READY` is the last expected serial message before the PM1 shutdown path removes the console power path.
+The firmware initializes the shared I2C bus and PM1 driver, reports board readiness, waits three seconds, and enters L0 shutdown. `TEST_READY` is the last expected serial message before PM1 cuts power to the ESP32-S3.
 
-## Power
+## Measured Current
 
-The reported current is the `WINDOW Avg` from the selected representative capture.
+The current shown in the measurement results is the `WINDOW Avg` from the measurement record.
 
 - 3.7 V: 8.89 uA
 - 4.2 V: 9.08 uA
 
-![L0 shutdown, 3.7 V](../../docs/power-graphs/l0_shutdown/3.7v.png)
-![L0 shutdown, 4.2 V](../../docs/power-graphs/l0_shutdown/4.2v.png)
+[View the measurement graphs](../../docs/power-graphs/README.md).
 
 ## Configuration
 
@@ -59,7 +60,7 @@ idf.py -p <PORT> flash
 idf.py -p <PORT> monitor
 ```
 
-Use serial monitoring only for Stage A functional validation. For Stage B power measurement, disconnect Type-C and do not run the serial monitor. Generated `build/`, `sdkconfig` and `dependencies.lock` files are local artifacts.
+Use serial monitoring only for functional validation. For power measurement, disconnect USB Type-C and do not run the serial monitor. Generated `build/`, `sdkconfig` and `dependencies.lock` files are local artifacts.
 
 ## Expected Validation
 
